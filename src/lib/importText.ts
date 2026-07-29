@@ -3,12 +3,21 @@ import type { Category, Product } from "./types";
 /**
  * Format d'import du Frigo.
  *
+ * L'écriture normale tient en un nom et une quantité, dans l'ordre qu'on veut :
+ *
+ *   3 Tomates
+ *   Tomates 3
+ *   Tomates x3
+ *   Tomates            -> quantité 1
+ *
+ * La catégorie est devinée d'après le nom, donc le frigo se range tout seul.
+ *
+ * Le reste est facultatif et sert surtout aux fichiers produits par un agent :
+ *
  *   # commentaire
  *   [Catégorie]                     -> s'applique aux lignes suivantes
  *   nom | quantité | catégorie | péremption | description | code-barres
- *
- * Seul le nom est obligatoire. Pour une liste écrite à la main, les
- * raccourcis « Tomates x3 » et « Yaourt !2026-08-04 » évitent les barres.
+ *   Yaourt !2026-08-04              -> date de péremption
  */
 
 export interface ParsedLine {
@@ -28,12 +37,23 @@ const QTY_SUFFIX = /\s*[x×*]\s*(\d{1,3})\s*$/i;
 const QTY_PREFIX = /^\s*(\d{1,3})\s*[x×*]\s+/i;
 const DATE_TOKEN = /\s*!\s*(\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{4})\s*/;
 
+// Nombre nu, sans le « x ». Limité à deux chiffres et suivi d'une lettre, pour
+// ne pas confisquer le « 500 » de « 500 g de farine » ni le « 15 » de « 15% ».
+const BARE_PREFIX = /^(\d{1,2})\s+(?=\D)/;
+const BARE_SUFFIX = /\s+(\d{1,2})\s*$/;
+
+// Un code-barres est reconnaissable sans marqueur : huit chiffres ou plus en
+// fin de ligne ne peuvent pas être une quantité. Il sert à retrouver la photo.
+const BARCODE_TOKEN = /\s+(\d{8,14})\s*$/;
+
 /** Sans accents ni casse, pour comparer « Légumes » et « legumes ». */
 export function fold(value: string): string {
   return value
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
     .toLowerCase()
+    .replace(/œ/g, "oe")
+    .replace(/æ/g, "ae")
     .trim();
 }
 
@@ -100,14 +120,23 @@ export function parseImport(text: string): ParsedLine[] {
         rest = rest.replace(DATE_TOKEN, " ").trim();
       }
 
-      const suffix = QTY_SUFFIX.exec(rest);
-      const prefix = QTY_PREFIX.exec(rest);
-      if (suffix) {
-        entry.quantity = Number.parseInt(suffix[1], 10);
-        rest = rest.replace(QTY_SUFFIX, "").trim();
-      } else if (prefix) {
-        entry.quantity = Number.parseInt(prefix[1], 10);
-        rest = rest.replace(QTY_PREFIX, "").trim();
+      const barcode = BARCODE_TOKEN.exec(rest);
+      if (barcode) {
+        entry.code = barcode[1];
+        rest = rest.replace(BARCODE_TOKEN, "").trim();
+      }
+
+      const forms: [RegExp, RegExpExecArray | null][] = [
+        [QTY_SUFFIX, QTY_SUFFIX.exec(rest)],
+        [QTY_PREFIX, QTY_PREFIX.exec(rest)],
+        [BARE_PREFIX, BARE_PREFIX.exec(rest)],
+        [BARE_SUFFIX, BARE_SUFFIX.exec(rest)],
+      ];
+      const found = forms.find(([, match]) => match !== null);
+      if (found) {
+        const [pattern, match] = found;
+        entry.quantity = Number.parseInt(match![1], 10);
+        rest = rest.replace(pattern, " ").trim();
       }
       entry.name = rest;
     }
@@ -123,6 +152,104 @@ export function parseImport(text: string): ParsedLine[] {
   });
 
   return lines;
+}
+
+/**
+ * Mots-clés servant à deviner la catégorie d'un produit d'après son nom, pour
+ * que le frigo se range seul sans qu'on ait à saisir quoi que ce soit.
+ *
+ * L'ordre compte : « pomme de terre » doit être reconnu comme un légume avant
+ * que « pomme » ne l'envoie chez les fruits.
+ */
+const CATEGORY_HINTS: [string, string[]][] = [
+  ["Légumes", [
+    "pomme de terre", "patate", "tomate", "salade", "laitue", "batavia", "mache",
+    "roquette", "carotte", "courgette", "aubergine", "poivron", "oignon", "ail",
+    "echalote", "poireau", "brocoli", "chou", "choux", "haricot", "petit pois",
+    "epinard", "concombre", "radis", "navet", "betterave", "celeri", "champignon",
+    "courge", "potiron", "endive", "fenouil", "artichaut", "asperge", "persil",
+    "ciboulette", "basilic", "coriandre", "avocat", "legume", "crudite",
+  ]],
+  ["Fruits", [
+    "pomme", "poire", "banane", "orange", "clementine", "mandarine", "citron",
+    "fraise", "framboise", "myrtille", "cassis", "cerise", "peche", "abricot",
+    "prune", "raisin", "melon", "pasteque", "kiwi", "ananas", "mangue", "figue",
+    "grenade", "compote", "nectarine", "fruit",
+  ]],
+  ["Œufs", ["oeuf"]],
+  ["Laitages", [
+    "lait", "yaourt", "yahourt", "fromage", "beurre", "creme", "emmental",
+    "comte", "mozzarella", "camembert", "chevre", "cheddar", "gruyere", "ricotta",
+    "feta", "skyr", "mascarpone", "parmesan", "raclette", "brie", "roquefort",
+    "flan", "petit suisse", "faisselle", "danette",
+  ]],
+  ["Viandes-Poissons", [
+    "poulet", "boeuf", "porc", "agneau", "veau", "dinde", "jambon", "lardon",
+    "bacon", "saucisse", "saucisson", "steak", "escalope", "merguez", "chorizo",
+    "saumon", "thon", "cabillaud", "colin", "crevette", "poisson", "viande",
+    "roti", "magret", "terrine", "rillette", "andouille", "boudin", "nugget",
+    "cordon bleu", "surimi", "moule", "crabe", "sardine", "maquereau", "truite",
+    "charcuterie", "farce",
+  ]],
+  ["Boissons", [
+    "eau", "jus", "soda", "coca", "limonade", "biere", "vin", "cidre", "sirop",
+    "ice tea", "the glace", "monster", "red bull", "redbull", "tropico",
+    "orangina", "perrier", "evian", "cristaline", "schweppes", "smoothie",
+    "boisson", "champagne", "whisky", "vodka", "rhum", "pastis",
+  ]],
+  ["Sauces", [
+    "sauce", "ketchup", "mayonnaise", "moutarde", "vinaigrette", "pesto",
+    "harissa", "vinaigre", "tapenade", "houmous", "guacamole", "huile",
+    "condiment",
+  ]],
+  ["Restes", [
+    "reste", "gratin", "lasagne", "quiche", "pizza", "soupe", "potage",
+    "ratatouille", "hachis", "couscous", "paella", "tajine",
+  ]],
+];
+
+/**
+ * Motifs compilés une fois. Le pluriel est toléré sur chaque mot et non
+ * seulement à la fin, sans quoi « pommes de terre » ne reconnaîtrait pas
+ * « pomme de terre » et finirait chez les fruits.
+ */
+const CATEGORY_PATTERNS: [string, RegExp[]][] = CATEGORY_HINTS.map(
+  ([category, keywords]) => [
+    category,
+    keywords.map(
+      (keyword) =>
+        new RegExp(`\\b${keyword.split(" ").map((word) => `${word}s?`).join("\\s+")}\\b`),
+    ),
+  ],
+);
+
+/**
+ * Devine la catégorie d'un produit, ou null si aucun mot-clé ne ressort.
+ *
+ * On retient le mot-clé qui apparaît le plus tôt dans le nom, et le plus long
+ * en cas d'égalité. C'est ce qui distingue « sauce tomate » d'une tomate et
+ * « jus d'orange » d'une orange : en français le nom principal vient en tête,
+ * et « pommes de terre » l'emporte sur « pommes » parce qu'il est plus long.
+ */
+export function guessCategory(name: string): string | null {
+  const folded = fold(name);
+  let best: { category: string; index: number; length: number } | null = null;
+
+  for (const [category, patterns] of CATEGORY_PATTERNS) {
+    for (const pattern of patterns) {
+      const match = pattern.exec(folded);
+      if (!match) continue;
+      if (
+        !best ||
+        match.index < best.index ||
+        (match.index === best.index && match[0].length > best.length)
+      ) {
+        best = { category, index: match.index, length: match[0].length };
+      }
+    }
+  }
+
+  return best?.category ?? null;
 }
 
 export function findCategory(name: string | null, categories: Category[]): Category | null {
@@ -187,7 +314,8 @@ export function resolveImport(
       actions.push({
         kind: "create",
         line: { ...line },
-        category: findCategory(line.categoryName, categories),
+        // À défaut de catégorie explicite, on la déduit du nom du produit.
+        category: findCategory(line.categoryName ?? guessCategory(line.name), categories),
       });
     }
   }

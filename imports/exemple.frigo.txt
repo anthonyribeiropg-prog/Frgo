@@ -1,32 +1,22 @@
-# Exemple de fichier d'import pour Le Frigo.
-# Les lignes commençant par # sont ignorées.
-#
-# Format complet :
-#   nom | quantité | catégorie | péremption | description | code-barres
-# Seul le nom est obligatoire. Les catégories reconnues sont :
-#   Légumes, Fruits, Laitages, Viandes-Poissons, Œufs, Boissons, Sauces,
-#   Restes, Autre
+# Exemple de liste d'import pour Le Frigo.
+# Un produit par ligne : le nom, puis la quantité. Sans quantité, on compte 1.
+# La catégorie est devinée d'après le nom, il n'y a rien à renseigner.
 
-[Légumes]
-Tomates grappe | 6 | Légumes
-Courgettes x2
+Tomates grappe 6
+Courgettes 2
 Salade batavia
+Pommes Golden 4
+Yaourt nature 8
+Beurre demi-sel
+Emmental râpé
+Lardons fumés 2
+Jus d'orange 2
 
-[Fruits]
-Pommes Golden | 4 | Fruits | | Vrac
+# La quantité s'écrit comme on veut : « Lait x2 », « 2 Lait » ou « Lait 2 ».
 
-[Laitages]
-Yaourt nature | 8 | Laitages | 2026-08-12
-Beurre demi-sel x1 !12/08/2026
-Emmental râpé | 1 | Laitages | 2026-08-20 | Pour les gratins
-
-[Viandes-Poissons]
-Lardons fumés | 2 | Viandes-Poissons | 2026-08-05
-
-[Boissons]
-Jus d'orange | 2 | Boissons | | Bouteille d'un litre
-
-# Une ligne peut porter son code-barres en sixième champ : l'application
-# s'en sert pour retrouver la photo du produit sur Open Food Facts.
-[Sauces]
-Sauce pesto basilic | 1 | Sauces | | | 3245413808196
+# Deux ajouts facultatifs, utiles surtout aux fichiers produits par l'agent
+# facture-vers-frigo :
+#   un code-barres en fin de ligne  -> photo récupérée automatiquement
+#   !2026-08-12                     -> date de péremption
+Sauce pesto basilic 3245413808196
+Crème fraîche !2026-08-12

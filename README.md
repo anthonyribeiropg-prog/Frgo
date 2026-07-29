@@ -68,15 +68,33 @@ Onglet **Produits → Importer une liste**. On dépose un `.txt` ou on colle son
 contenu ; un aperçu montre ligne par ligne ce qui va être créé, réapprovisionné
 ou ignoré, et rien n'est écrit en base avant validation.
 
+Une ligne par produit : le nom, puis la quantité. C'est tout.
+
 ```
-# nom | quantité | catégorie | péremption | description | code-barres
-[Boissons]
-Tropico Orange Ananas | 2 | Boissons | | Boisson aux fruits | 5449000335579
+Tomates 3
+Courgettes
+Yaourt nature 4
 ```
 
-Seul le nom est obligatoire. Pour une liste écrite à la main, les raccourcis
-`Tomates x3`, `2x Oignons` et `Yaourt !2026-08-04` évitent les barres, et un
-en-tête `[Légumes]` s'applique aux lignes suivantes.
+La quantité s'écrit où on veut et comme on veut — `Lait x2`, `2 Lait`,
+`Lait 2` — et son absence vaut 1. Deux garde-fous évitent les mauvaises
+surprises : la quantité nue est limitée à deux chiffres, si bien que
+`500 g de farine` garde son 500, et `Coca 33cl 6` comprend bien six canettes
+de 33 cl.
+
+**La catégorie est déduite du nom**, il n'y a rien à saisir : le frigo se range
+seul. La règle retient le mot-clé qui apparaît le plus tôt dans le nom, ce qui
+distingue `sauce tomate` d'une tomate et `jus d'orange` d'une orange — en
+français le nom principal vient en tête. En cas d'égalité, le plus long gagne,
+d'où `pommes de terre` chez les légumes et non chez les fruits.
+
+Deux ajouts facultatifs : un code-barres en fin de ligne (huit chiffres ou
+plus, reconnu sans marqueur) et une date de péremption notée `!2026-08-04`.
+
+```
+Tropico Orange Ananas 2 5449000335579
+Yaourt nature 4 !2026-08-04
+```
 
 Un produit déjà connu n'est pas dupliqué : sa quantité augmente via la même
 fonction atomique que les boutons + et −. Un produit cité deux fois dans le

@@ -3,15 +3,16 @@ import { useStore, type ImportSummary } from "../state/store";
 import { parseImport, resolveImport, type ImportAction } from "../lib/importText";
 import { Button, Modal } from "./ui";
 
-const EXAMPLE = `# Une ligne par produit, seul le nom est obligatoire.
-# nom | quantité | catégorie | péremption | description | code-barres
+const EXAMPLE = `Tomates 3
+Courgettes
+2 Yaourts nature
+Lait x2
+Emmental râpé`;
 
-[Légumes]
-Batavia | 1
-Poivrons bicolores bio x2 !2026-08-06
-
-[Boissons]
-Tropico Orange Ananas | 2 | Boissons | | Pack de 2 | 5449000335579`;
+const ADVANCED = `# Facultatif, pour les fichiers produits automatiquement :
+Yaourt !2026-08-04                     date de péremption
+[Boissons]                             force la catégorie des lignes suivantes
+Tropico | 2 | Boissons | | | 5449000335579`;
 
 function Badge({ action }: { action: ImportAction }) {
   if (action.kind === "invalid") {
@@ -223,11 +224,17 @@ export function ImportDialog({ open, onClose }: { open: boolean; onClose: () => 
 
           <details className="rounded-xl bg-slate-50 p-3">
             <summary className="cursor-pointer text-sm font-semibold text-slate-700">
-              Format attendu
+              Comment écrire la liste
             </summary>
-            <pre className="mt-2 overflow-x-auto text-xs leading-relaxed text-slate-600">
-              {EXAMPLE}
-            </pre>
+            <div className="mt-2 space-y-2 text-xs leading-relaxed text-slate-600">
+              <p>
+                Un produit par ligne, avec sa quantité avant ou après le nom, avec ou sans
+                le « x ». Sans quantité, on compte 1. La catégorie est devinée d'après le
+                nom, donc le frigo se range tout seul.
+              </p>
+              <pre className="overflow-x-auto rounded-lg bg-white p-2">{EXAMPLE}</pre>
+              <pre className="overflow-x-auto rounded-lg bg-white p-2">{ADVANCED}</pre>
+            </div>
           </details>
         </div>
       )}
