@@ -21,3 +21,6 @@ design/
 
 # Cache de compilation TypeScript
 *.tsbuildinfo
+
+# Graphe de connaissances : regenerable par /graphify --update
+graphify-out/
