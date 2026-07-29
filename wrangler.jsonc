@@ -1,7 +1,9 @@
 {
   // Déploiement en une commande : npx wrangler deploy
   // La première exécution ouvre une page de connexion Cloudflare.
-  "name": "le-frigo",
+  // Doit correspondre au Worker relié au dépôt sur Cloudflare : le jeton de
+  // build est délivré pour ce nom précis, un écart fait échouer le déploiement.
+  "name": "le-frigo-1",
   "compatibility_date": "2026-07-29",
   "assets": {
     "directory": "./dist"
