@@ -97,9 +97,25 @@ libellés d'enseigne sont trop longs pour une vignette. Les résultats vont dans
 
 ## Déploiement
 
-Cloudflare Pages ou Vercel, avec `npm run build` et le dossier `dist`. Les deux variables
-`VITE_SUPABASE_URL` et `VITE_SUPABASE_KEY` sont à recopier dans les variables d'environnement
-de l'hébergeur.
+Le site est publié sur **GitHub Pages** à chaque poussée sur `main`, par le
+workflow [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) :
+<https://anthonyribeiropg-prog.github.io/Frgo/>
+
+Deux conditions à ne pas perdre de vue si le déploiement est refait ailleurs.
+
+Le site est servi depuis `/Frgo/` et non depuis la racine du domaine, d'où le
+script `build:pages` qui fixe la base des chemins. Sans lui, le navigateur
+chercherait le JavaScript à la racine et n'obtiendrait que des 404. C'est aussi
+pourquoi le manifeste utilise des chemins relatifs.
+
+Et dans les réglages du dépôt, *Settings → Pages → Source* doit valoir
+**GitHub Actions**. Laissé sur « Deploy from a branch », GitHub publie le dépôt
+tel quel : le visiteur reçoit alors le `index.html` source, celui qui appelle
+`/src/main.tsx`, que son navigateur ne sait pas exécuter.
+
+Pour héberger ailleurs — Cloudflare, Vercel, Netlify — il suffit de `npm run build`
+et du dossier `dist`, en déclarant `VITE_SUPABASE_URL` et `VITE_SUPABASE_KEY`
+dans les variables de build de l'hébergeur.
 
 ## Notes de sécurité
 
