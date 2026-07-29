@@ -1,0 +1,23 @@
+node_modules
+dist
+.env
+.env.local
+*.local
+.DS_Store
+
+# Dépôt public : rien de ce qui suit ne doit y arriver.
+
+# Factures et tickets — ils portent nom, adresse postale et identifiant client.
+images/
+
+# Listes d'import réelles : ce sont les courses du foyer.
+# Le format est documenté par imports/exemple.frigo.txt, qui reste versionné.
+imports/*
+!imports/exemple.frigo.txt
+
+# Illustration de frigo achetée sous licence, et que l'application n'utilise
+# plus depuis que le visuel est dessiné en CSS.
+design/
+
+# Cache de compilation TypeScript
+*.tsbuildinfo

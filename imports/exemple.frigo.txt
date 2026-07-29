@@ -1,0 +1,32 @@
+# Exemple de fichier d'import pour Le Frigo.
+# Les lignes commençant par # sont ignorées.
+#
+# Format complet :
+#   nom | quantité | catégorie | péremption | description | code-barres
+# Seul le nom est obligatoire. Les catégories reconnues sont :
+#   Légumes, Fruits, Laitages, Viandes-Poissons, Œufs, Boissons, Sauces,
+#   Restes, Autre
+
+[Légumes]
+Tomates grappe | 6 | Légumes
+Courgettes x2
+Salade batavia
+
+[Fruits]
+Pommes Golden | 4 | Fruits | | Vrac
+
+[Laitages]
+Yaourt nature | 8 | Laitages | 2026-08-12
+Beurre demi-sel x1 !12/08/2026
+Emmental râpé | 1 | Laitages | 2026-08-20 | Pour les gratins
+
+[Viandes-Poissons]
+Lardons fumés | 2 | Viandes-Poissons | 2026-08-05
+
+[Boissons]
+Jus d'orange | 2 | Boissons | | Bouteille d'un litre
+
+# Une ligne peut porter son code-barres en sixième champ : l'application
+# s'en sert pour retrouver la photo du produit sur Open Food Facts.
+[Sauces]
+Sauce pesto basilic | 1 | Sauces | | | 3245413808196
